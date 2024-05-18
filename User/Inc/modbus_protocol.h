@@ -30,6 +30,7 @@ enum {
 
 // Exception codes
 enum {
+    MB_EX_NONE = -1,
     MB_EX_OK = 0,
     MB_EX_ILLEGAL_FUNCTION,
     MB_EX_ILLEGAL_DATA_ADDRESS,

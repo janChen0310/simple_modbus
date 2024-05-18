@@ -18,54 +18,40 @@ typedef struct {
 class modbus;
 
 class modbus_backend { // modbus 后端
-public:
-    modbus_backend();
+private:
+    uint8_t* bits_start; // 线圈起始地址
+    uint8_t nb_bits; // 线圈数量
+    uint8_t* input_bits_start; // 输入线圈起始地址
+    uint8_t nb_input_bits; // 输入线圈数量
+    uint8_t* regs_start; // 寄存器起始地址
+    uint8_t nb_regs; // 寄存器数量
+    uint8_t* input_regs_start; // 输入寄存器起始地址
+    uint8_t nb_input_regs; // 输入寄存器数量
 
-    void Handle()
-    {
-        if (rx_msg.len > 0 && rx_msg.data[MB_DATA_OFF] == MB_EX_OK) {
-            switch (rx_msg.data[MB_FUNC_OFF])
-            {
-                case MB_FC_READ_COILS:
-                    read_coils(rx_msg.data[MB_DATA_OFF + 1], rx_msg.data[MB_DATA_OFF + 3], backend_data);
-                    break;
-                case MB_FC_READ_DISCRETE_INPUTS:
-                    read_discrete_inputs(rx_msg.data[MB_DATA_OFF + 1], rx_msg.data[MB_DATA_OFF + 3], backend_data);
-                    break;
-                case MB_FC_READ_HOLDING_REGISTERS:
-                    read_holding_registers(rx_msg.data[MB_DATA_OFF + 1], rx_msg.data[MB_DATA_OFF + 3], (uint16_t *)backend_data);
-                    break;
-                case MB_FC_READ_INPUT_REGISTERS:
-                    read_input_registers(rx_msg.data[MB_DATA_OFF + 1], rx_msg.data[MB_DATA_OFF + 3], (uint16_t *)backend_data);
-                    break;
-                case MB_FC_WRITE_SINGLE_COIL:
-                    write_single_coil(rx_msg.data[MB_DATA_OFF + 1], rx_msg.data[MB_DATA_OFF + 3]);
-                    break;
-                case MB_FC_WRITE_SINGLE_REGISTER:
-                    write_single_register(rx_msg.data[MB_DATA_OFF + 1], (rx_msg.data[MB_DATA_OFF + 3] << 8) + rx_msg.data[MB_DATA_OFF + 4]);
-                    break;
-                case MB_FC_WRITE_MULTIPLE_COILS:
-                    write_multiple_coils(rx_msg.data[MB_DATA_OFF + 1], rx_msg.data[MB_DATA_OFF + 3], backend_data);
-                    break;
-                case MB_FC_WRITE_MULTIPLE_REGISTERS:
-                    write_multiple_registers(rx_msg.data[MB_DATA_OFF + 1], rx_msg.data[MB_DATA_OFF + 3], (uint16_t *)backend_data);
-                    break;
-                case MB_FC_READWRITE_MULTIPLE_REGISTERS:
-                    read_write_multiple_registers(rx_msg.data[MB_DATA_OFF + 1], rx_msg.data[MB_DATA_OFF + 3], (uint16_t *)backend_data, rx_msg.data[MB_DATA_OFF + 5], rx_msg.data[MB_DATA_OFF + 7], (uint16_t *)(backend_data + 2));
-                    break;
-                default:
-                    break;
-            }
+    uint8_t function_code;
+    uint8_t data[MB_PDU_SIZE_MAX - 1];
+    uint8_t rx_len, tx_len; // rx_len从modbus处获取，tx_len由计算得到
+public:
+    inline modbus_backend(uint8_t* _bits_start,uint8_t _nb_bits,
+                   uint8_t* _input_bits_start, uint8_t _nb_input_bits,
+                   uint8_t* _regs_start, uint8_t _nb_regs,
+                   uint8_t* _input_regs_start, uint8_t _nb_input_regs)
+    : bits_start(_bits_start), nb_bits(_nb_bits),
+        input_bits_start(_input_bits_start), nb_input_bits(_nb_input_bits),
+        regs_start(_regs_start), nb_regs(_nb_regs),
+        input_regs_start(_input_regs_start), nb_input_regs(_nb_input_regs) {
         }
-    }
+
+
+    void Handle();
 
     // 主机模式下为设置通信从机地址，从机模式下为设置自身地址
-    uint8_t set_address(modbus* ctx, uint8_t address);
+    uint8_t set_address(uint8_t address);
+    uint8_t get_address();
     uint8_t set_timeout(uint32_t timeout);
     uint8_t get_timeout();
-    uint8_t address; // Modbus address
+
     uint8_t backend_data[MB_PDU_SIZE_MAX];
-    Message rx_msg, tx_msg; // Modbus message
 
     uint8_t read_coils(uint16_t addr, uint16_t nb, uint8_t *dest);
     uint8_t read_discrete_inputs(uint16_t addr, uint16_t nb, uint8_t *dest);
@@ -86,11 +72,13 @@ private:
 public:
     void Handle();
 
+    Message rx_msg, tx_msg; // Modbus message 接收的消息及长度从modbus_frontend的串口处获取，发送的消息及长度从modbus_backend处获取
+    uint8_t address; // Modbus address
     modbus_backend *backend;
     uint8_t pre_check();
     uint8_t save_to_backend();
-    uint8_t save_to_backend(uint8_t exception_code);
     uint8_t prepare_response();
+    uint16_t CRC16(uint8_t *data, uint16_t len);
 };
 
 #endif //MODBUS_MODBUS_H
