@@ -29,7 +29,8 @@ private:
     uint8_t nb_input_regs; // 输入寄存器数量
 
     uint8_t function_code;
-    uint8_t data[MB_PDU_SIZE_MAX - 1];
+    uint8_t rx_data[MB_PDU_SIZE_MAX - 1]; // modbus类将接收到的消息预处理后存入rx_data
+    uint8_t* tx_data; // tx_data指向一块动态分配的内存，内存大小根据读取的数据大小确定
     uint8_t rx_len, tx_len; // rx_len从modbus处获取，tx_len由计算得到
 public:
     inline modbus_backend(uint8_t* _bits_start,uint8_t _nb_bits,
@@ -51,8 +52,6 @@ public:
     uint8_t set_timeout(uint32_t timeout);
     uint8_t get_timeout();
 
-    uint8_t backend_data[MB_PDU_SIZE_MAX];
-
     uint8_t read_coils(uint16_t addr, uint16_t nb, uint8_t *dest);
     uint8_t read_discrete_inputs(uint16_t addr, uint16_t nb, uint8_t *dest);
     uint8_t read_holding_registers(uint16_t addr, uint16_t nb, uint16_t *dest);
@@ -63,7 +62,6 @@ public:
     uint8_t write_multiple_registers(uint16_t addr, uint16_t nb, uint16_t *src);
     uint8_t read_write_multiple_registers(uint16_t read_addr, uint16_t read_nb, uint16_t *dest, uint16_t write_addr, uint16_t write_nb, uint16_t *src);
 
-    void modbus_backend_Handle();
 };
 
 class modbus { // modbus协议解析
@@ -82,4 +80,3 @@ public:
 };
 
 #endif //MODBUS_MODBUS_H
-

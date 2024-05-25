@@ -19,6 +19,8 @@ private:
     uint8_t stopbits;
     uint8_t parity;
     modbus *ctx;
+    uint8_t rx_buff[MB_ADU_SIZE_MAX]; // 从串口读到的数据最先被DMA搬运到这里
+    uint8_t tx_buff[MB_ADU_SIZE_MAX];
 public:
     inline modbus_frontend(char* port, int baud, uint8_t databits, uint8_t stopbits, uint8_t parity)
     : port(port), baud(baud), databits(databits), stopbits(stopbits), parity(parity) {
@@ -27,9 +29,9 @@ public:
     uint8_t connect(); // Connect to the serial port
     uint8_t disconnect(); // Disconnect from the serial port
     ssize_t send(uint8_t *pdu, uint8_t len); // Send a Modbus PDU
-    ssize_t recv(uint8_t *pdu, uint8_t len); // Receive a Modbus PDU
+    ssize_t recv(); // Receive a Modbus PDU
 
-    void modbus_frontend_Handle();
+    void Handle();
 };
 
 #endif //MODBUS_RTU_H
