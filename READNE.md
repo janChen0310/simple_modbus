@@ -1,0 +1,11 @@
+# Modbus结构与功能
+
+## 文件结构
+
+`modbus.h`文件中声明了modbus类和modbus_backend类， `modbus_RTU.h`文件中声明了modbus_frontend类，
+其中modbus_frontend类拥有串口资源，负责消息的发送和接收，modbus_backend类负责接收经过解析的消息，并从对应的内存中读取或写入数据。modbus类作为modbus_backend和modbus_frontend的中间层，负责解析从modbus_frontend接收到的消息，并将解析后的消息传递给modbus_backend；同时，将modbus_backend
+返回的数据打包成modbus消息，传递给modbus_frontend。
+
+## 工作流程
+首先由modbus_frontend类负责配置并打开串口(在单片机上在上电时统一初始化并开启串口接收发送中断等)。此后在每一个工作周期中，由modbus类先生成上一条消息的回复，再解析当前接收到的消息。
+然后由modbus_frontend发送打包好的消息并再次开启接收中断。最后由modbus_backend类根据modbus类传递的消息进行数据的读写操作，并生成当前请求的回复消息。
